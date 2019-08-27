@@ -1,8 +1,9 @@
 import React from 'react';
-import { Text, SafeAreaView, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { Text, SafeAreaView, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as Permissions from 'expo-permissions';
 import { Camera } from 'expo-camera';
-import { Button, Header, Footer, Icon, Right } from 'native-base';
+import { Button, Header, Icon, Right } from 'native-base';
 
 export default class CameraSection extends React.Component {
 	state = {
@@ -25,20 +26,29 @@ export default class CameraSection extends React.Component {
 	}
 
 	takePhoto = async () => {
-		console.log('Button Pressed');
-		if (this.camera) {
-			console.log('Taking photo');
-			const options = {
-				quality: 1, base64: true, fixOrientation: true,
-				exif: true
-			};
-			let photo = await this.camera.takePictureAsync(options);
-			console.log(photo);
+		try {
+			const { onPhotoTaken, onLoad } = this.props;
+			//onLoad();
+			if (this.camera) {
+				this.setState({ disabled: true })
+				console.log('taking photo');
+				const options = {
+					quality: 1,
+					base64: true,
+					fixOrientation: true,
+					exif: true
+				}
+				let photo = await this.camera.takePictureAsync();
+				onPhotoTaken(photo);
+				console.log(photo);
+			}
+		} catch (error) {
+			console.log(error)
 		}
 	}
 
 	render() {
-		const { hasCameraPermission } = this.state;
+		const { hasCameraPermission, disabled } = this.state;
 		if (hasCameraPermission === null) {
 			return <SafeAreaView />;
 		} else if (hasCameraPermission === false) {
@@ -59,9 +69,9 @@ export default class CameraSection extends React.Component {
 								</Button>
 							</Right>
 						</ Header>
-						<Button style={styles.footer} onPress={this.takePhoto}>
-							<Icon type="Ionicons" name="radio-button-on" style={{ fontSize: 50 }} />
-						</Button>
+						<TouchableOpacity style={[styles.footer, disabled ? { opacity: 0.2 } : null]} onPress={this.takePhoto} disabled={disabled}>
+							<Ionicons name="md-radio-button-on" size={60} color="white" />
+						</TouchableOpacity>
 					</Camera>
 				</SafeAreaView>
 			);
@@ -79,7 +89,9 @@ const styles = StyleSheet.create({
 		backgroundColor: 'transparent',
 		flexDirection: 'row',
 		justifyContent: 'center',
-		alignSelf: 'center'
+		alignSelf: 'center',
+		padding: 15,
+		zIndex: 100
 	},
 	header: {
 		position: 'absolute',
